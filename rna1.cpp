@@ -11,11 +11,19 @@ int tamanhoVetorInt(int *i)
   return tamanho;
 }
 
+void transfereBuffersFloat(float *A, float *B, int sizeB){
+  free(A);
+  A = (float*)malloc(sizeof(float)*sizeB);
+  for(int aux = 0; aux < sizeB; aux++){
+    A[aux] = B[aux];
+  }
+}
+
 typedef struct
 {
   int quantidade;
   float *pesosEntrada;
-  float saida;
+  float saida;  // saida de todas as multiplicações
 } NEURONIOS;
 
 typedef struct
@@ -25,8 +33,8 @@ typedef struct
 } CAMADA;
 
 float randomFloat()
-{ // gera numero aleat�rio entre 0 e 1
-  // pode ser 0 mas n�o pode ser 1
+{ // gera numero aleatório entre 0 e 1
+  // pode ser 0 mas não pode ser 1
   return (float)(rand() % 1000) / 1000;
 }
 
@@ -46,8 +54,7 @@ public:
   float *valoresSaidas;
   unsigned int seed;
 
-  RedeNeural(int entradas, int *internas, int saida)
-  {
+  RedeNeural(int entradas, int *internas, int saida)  {
     // entradas é a quantidade de valores entrados
     // internas é um vetor de inteiros com a quantidade de neuronios de cada camada interna
     // saida é a quantidade de neuronios de saida
@@ -140,6 +147,14 @@ public:
     return camadas[camada].tamanho;
   }
 
+  float calculaNeuronio(int camadaX, int neuronioX, float *valores, int tamanho){
+    float *saida = &camadas[camadaX].neuronio[neuronioX].saida;
+    for(int i = 0; i < tamanho; i++){
+      *saida += valores[i] * camadas[camadaX].neuronio[neuronioX].pesosEntrada[i];
+    }
+    return camadas[camadaX].neuronio[neuronioX].saida;
+  }
+
   void printRede()
   {
     for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++)
@@ -192,19 +207,22 @@ public:
     }
   }
 
-  void propagacao()
-  {
+  void propagacao()  {
+    float *bufferA, *bufferB;
     // pega as entradas
     // manda pra um buffer A
-    // 	faz as multimplica��es e retorna para um buffer B
+    transfereBuffersFloat(bufferA, this->valoresEntradas, this->qtdEntradas);
+    // 	faz as multiplicaões e retorna para um buffer B
     //  move o buffer B para o A
+    for(int i = 0; i < this->quantidadeCamadas-2;i++){
+
+    }
     // repete
     // manda buffer B para saida
   }
 };
 
-int main()
-{ //essa parte é só para testar
+int main(){ //essa parte é só para testar
   int x[] = {7, 2, 0};
   system("cls");
   RedeNeural rect(2, x, 5);
