@@ -1,6 +1,9 @@
 ---
+# comentário
+# opções de autoformatação
 BasedOnStyle: Google
-TabWidth: '2'
+IndentWidth: 2
+TabWidth: 2
+IndentCaseLabels: true
+ColumnLimit: 140
 UseTab: Always
-
-...
