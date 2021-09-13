@@ -41,7 +41,7 @@ typedef struct {
 float randomFloat() {	 // gera numero aleatório entre 0 e 1
 	// pode ser 0 mas não pode ser 1
 	return (float)(rand() % 1000) / 1000;
-}
+}	 // rever
 
 class RedeNeural {
  private:
@@ -58,21 +58,25 @@ class RedeNeural {
 	int funcao;
 	float *valoresEntradas;
 	float *valoresSaidas;
+	float *saidaDesejada;
 	unsigned int seed;
+	int backpropagationType;
 
 	RedeNeural(int entradas, int *internas, int saida) {
 		// entradas é a quantidade de valores entrados
 		// internas é um vetor de inteiros com a quantidade de neuronios de cada
 		// camada interna saida é a quantidade de neuronios de saida
 		int aux = 0, aux2 = 0, aux3 = 0;
-		taxaDeAprendizagem = 0.001f;
-		erro = 0.01f;
+		taxaDeAprendizagem = 0.1f;
+		erro = 0.1f;
 		quantidadeCamadas = tamanhoVetorInt(internas) + 2;	// entrada + internas + saida
 		valoresEntradas = (float *)malloc(entradas * sizeof(float));
 		valoresSaidas = (float *)malloc(saida * sizeof(float));
+		saidaDesejada = (float *)malloc(saida * sizeof(float));
 		qtdEntradas = entradas;
 		qtdSaidas = saida;
 		funcao = 2;
+		backpropagationType = 1;
 		while (aux < entradas) {	// zera os valores de entrada
 			valoresEntradas[aux] = 0;
 			aux++;
@@ -127,6 +131,7 @@ class RedeNeural {
 		this->bias = b;
 		this->valoresEntradas[this->qtdEntradas] = this->bias;
 	}
+
 	float funcao_ativacao(float net, float a) {
 		switch (funcao) {
 			case 1:
@@ -144,6 +149,31 @@ class RedeNeural {
 							exp(a.net) + exp(-a.net)
 				*/
 				return ((exp(a * net) - exp(-a * net)) / (exp(a * net) + exp(-a * net)));
+				break;
+			default:
+				return net;
+				break;
+		}
+	}
+
+	float derivada(float net, float a) {
+		switch (funcao) {
+			case 1:
+				/*
+								1                       1
+					y(n) = --------------- * ( 1 - --------------- )
+							1 - exp(-a.net)         1 - exp(-a.net)
+				*/
+				return ((1.0 / (1.0 + exp(-a * net))) * (1.0 - (1.0 / (1.0 + exp(-a * net)))));
+				break;
+			case 2:
+				/*
+							exp(a.net) - exp(-a.net)
+				y(n) = 1 - ( ------------------------ )²
+							exp(a.net) + exp(-a.net)
+				*/
+
+				return (1.0 - pow((exp(a * net) - exp(-a * net)) / (exp(a * net) + exp(-a * net)), 2));
 				break;
 			default:
 				return net;
@@ -275,7 +305,30 @@ class RedeNeural {
 			neuroniosSaidas[neuronioAtual].saida2 = this->valoresSaidas[neuronioAtual];
 			this->valoresSaidas[neuronioAtual] = funcao_ativacao(this->valoresSaidas[neuronioAtual], 1.0f);
 		}
-		//  move o buffer B para o A
+		//	-------------------------
+		//	|	Retropropagação		|
+		//	-------------------------
+		float erroQuadratico = 0.0f;
+		float erroMedio = 0.0f;
+		if (this->backpropagationType == 1) {
+			for (int neuronioAtual = 0; neuronioAtual < this->qtdSaidas; neuronioAtual++) {
+				erroQuadratico =
+						(saidaDesejada[neuronioAtual] - neuroniosSaidas[neuronioAtual].saida) * derivada(neuroniosSaidas[neuronioAtual].saida2, 1.0f);
+				for (int posicao = 0; posicao < neuroniosSaidas[neuronioAtual].quantidade; posicao++) {
+					neuroniosSaidas[neuronioAtual].pesosEntrada[posicao] += (taxaDeAprendizagem * saidaDesejada[neuronioAtual] * erroQuadratico);
+				}
+			}
+
+			for (int camadaAtual = quantidadeCamadas - 2; camadaAtual >= 0; camadaAtual--) {
+				for (int neuronioAtual = 0; neuronioAtual < camadas[camadaAtual].tamanho; neuronioAtual++) {
+					erroQuadratico =
+							(saidaDesejada[neuronioAtual] - neuroniosSaidas[neuronioAtual].saida) * derivada(neuroniosSaidas[neuronioAtual].saida2, 1.0f);
+					for (int posicao = 0; posicao < neuroniosSaidas[neuronioAtual].quantidade; posicao++) {
+						neuroniosSaidas[neuronioAtual].pesosEntrada[posicao] += (taxaDeAprendizagem * saidaDesejada[neuronioAtual] * erroQuadratico);
+					}
+				}
+			}
+		}
 	}
 };
 
@@ -301,6 +354,7 @@ void debugSetter(RedeNeural rn) {
 	rn.valoresEntradas[1] = 0.4f;
 	rn.valoresEntradas[2] = -0.1f;
 	rn.valoresEntradas[3] = 0.3f;
+	rn.saidaDesejada[0] = 1.0f;
 }
 
 int main() {	// essa parte é só para testar
