@@ -91,7 +91,7 @@ class RedeNeural {
 			camadas[aux].neuronio = (NEURONIOS *)malloc(internas[aux] * sizeof(NEURONIOS));
 
 			for (aux2 = 0; aux2 < internas[aux]; aux2++) {
-				// aloca os pesos
+				// aloca os pesos e peso bias
 
 				if (aux == 0) {
 					camadas[aux].neuronio[aux2].quantidade = entradas + 1;
@@ -101,7 +101,7 @@ class RedeNeural {
 
 				// zera os pesos
 				camadas[aux].neuronio[aux2].pesosEntrada = (float *)malloc(sizeof(float) * camadas[aux].neuronio[aux2].quantidade);
-				// R: X � a quantidade de neuronios da camada anterior
+				// R: X é a quantidade de neuronios da camada anterior
 				for (aux3 = 0; aux3 < camadas[aux].neuronio[aux2].quantidade; aux3++) {
 					camadas[aux].neuronio[aux2].pesosEntrada[aux3] = 0.0f;
 				}
@@ -232,7 +232,8 @@ class RedeNeural {
 				camadas[camadaAtual].neuronio[neuronioAtual].saida = bufferB[neuronioAtual];
 			}
 			//  move o buffer B para o A
-			transfereBuffersFloat(&bufferA, bufferB, camadas[camadaAtual].tamanho);
+			bufferB[camadas[camadaAtual].tamanho] = this->bias;
+			transfereBuffersFloat(&bufferA, bufferB, camadas[camadaAtual].tamanho + 1);
 			free(bufferB);
 		}
 		// repete
@@ -248,16 +249,17 @@ class RedeNeural {
 };
 
 void debugSetter(RedeNeural rn) {
-	rn.setPeso(0, 0, 0, 0.4f);
-	rn.setPeso(0, 0, 1, 0.4f);
+	rn.setPeso(0, 0, 0, 1.0f);
+	rn.setPeso(0, 0, 1, 1.0f);
+	rn.setPeso(0, 0, 2, 1.0f);
 	rn.setPeso(1, 0, 0, 1.0f);
+	rn.setPeso(1, 0, 1, 0.2f);
 	rn.valoresEntradas[0] = 1.0f;
 	rn.valoresEntradas[1] = 1.0f;
 }
 
 int main() {	// essa parte é só para testar
 	int x[] = {1, 0};
-	system("clear");
 	RedeNeural rect(2, x, 1);
 	rect.seed = 2;
 	rect.randomCreate();
