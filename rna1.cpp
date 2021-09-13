@@ -50,9 +50,9 @@ class RedeNeural {
 	NEURONIOS *neuroniosSaidas;
 	int qtdEntradas;
 	int qtdSaidas;
+	float bias;
 
  public:
-	float bias;
 	float *valoresEntradas;
 	float *valoresSaidas;
 	unsigned int seed;
@@ -64,7 +64,6 @@ class RedeNeural {
 		int aux = 0, aux2 = 0, aux3 = 0;
 		taxaDeAprendizagem = 0.001f;
 		erro = 0.01f;
-		bias = 0.0f;
 		quantidadeCamadas = tamanhoVetorInt(internas) + 2;	// entrada + internas + saida
 		valoresEntradas = (float *)malloc(entradas * sizeof(float));
 		valoresSaidas = (float *)malloc(saida * sizeof(float));
@@ -79,6 +78,7 @@ class RedeNeural {
 			valoresSaidas[aux] = 0;
 			aux++;
 		}
+		setbias(1.0f);
 
 		// aloca as camadas
 		camadas = (CAMADA *)malloc((quantidadeCamadas - 2) * sizeof(CAMADA));
@@ -94,9 +94,9 @@ class RedeNeural {
 				// aloca os pesos
 
 				if (aux == 0) {
-					camadas[aux].neuronio[aux2].quantidade = entradas;
+					camadas[aux].neuronio[aux2].quantidade = entradas + 1;
 				} else {
-					camadas[aux].neuronio[aux2].quantidade = camadas[aux - 1].tamanho;
+					camadas[aux].neuronio[aux2].quantidade = camadas[aux - 1].tamanho + 1;
 				}
 
 				// zera os pesos
@@ -110,13 +110,18 @@ class RedeNeural {
 		// alocar pra saida
 		neuroniosSaidas = (NEURONIOS *)malloc(saida * sizeof(NEURONIOS));
 		for (aux = 0; aux < saida; aux++) {
-			neuroniosSaidas[aux].quantidade = camadas[quantidadeCamadas - 3].tamanho;
+			neuroniosSaidas[aux].quantidade = camadas[quantidadeCamadas - 3].tamanho + 1;
 			neuroniosSaidas[aux].pesosEntrada = (float *)malloc(neuroniosSaidas[aux].quantidade * sizeof(float));
 			// zera pesos de saida
 			for (aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
 				neuroniosSaidas[aux].pesosEntrada[aux2] = 0.0f;
 			}
 		}
+	}
+
+	void setbias(float b) {
+		this->bias = b;
+		this->valoresEntradas[this->qtdEntradas] = this->bias;
 	}
 
 	void dealloc() {	// atualizar
@@ -161,6 +166,11 @@ class RedeNeural {
 	}
 
 	void printRede() {
+		printf("Entradas: \n");
+		for (int i = 0; i < qtdEntradas; i++) {
+			printf("%.2f ", valoresEntradas[i]);
+		}
+		printf("%.2fB\n", bias);
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			printf("C: %i T:%i\n", camadaAtual, this->tamanhoDaCamada(camadaAtual));
 			for (int neuronio = 0; neuronio < this->tamanhoDaCamada(camadaAtual); neuronio++) {
@@ -170,7 +180,7 @@ class RedeNeural {
 					printf("%.2f ", camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso]);
 				}
 			}
-			printf("\n");
+			printf("B\n");
 		}
 		printf("saidas\n");
 		printf("C: %i T:%i\n", quantidadeCamadas - 2, qtdSaidas);
@@ -179,6 +189,11 @@ class RedeNeural {
 			for (int aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
 				printf("%.2f ", neuroniosSaidas[aux].pesosEntrada[aux2]);
 			}
+		}
+		printf("B\n");
+		printf("Saidas: \n");
+		for (int i = 0; i < qtdSaidas; i++) {
+			printf("%.2f ", valoresSaidas[i]);
 		}
 		printf("\n");
 	}
@@ -206,7 +221,7 @@ class RedeNeural {
 		// alocar B
 		// pega as entradas
 		// manda pra um buffer A
-		transfereBuffersFloat(&bufferA, this->valoresEntradas, this->qtdEntradas);
+		transfereBuffersFloat(&bufferA, this->valoresEntradas, this->qtdEntradas + 1);
 		// 	faz as multiplicaões e retorna para um buffer B
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			// circular todas as camadas incluindo a inicial e excluindo a final
