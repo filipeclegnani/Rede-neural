@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -28,7 +29,8 @@ void transfereBuffersFloat(float **A, float *B, int sizeB) {
 typedef struct {
 	int quantidade;
 	float *pesosEntrada;
-	float saida;	// saida de todas as multiplicações
+	float saida;	 // saida de todas as multiplicações com a função
+	float saida2;	 // saida de todas as multiplicações sem a função
 } NEURONIOS;
 
 typedef struct {
@@ -53,6 +55,7 @@ class RedeNeural {
 	float bias;
 
  public:
+	int funcao;
 	float *valoresEntradas;
 	float *valoresSaidas;
 	unsigned int seed;
@@ -69,6 +72,7 @@ class RedeNeural {
 		valoresSaidas = (float *)malloc(saida * sizeof(float));
 		qtdEntradas = entradas;
 		qtdSaidas = saida;
+		funcao = 2;
 		while (aux < entradas) {	// zera os valores de entrada
 			valoresEntradas[aux] = 0;
 			aux++;
@@ -123,6 +127,29 @@ class RedeNeural {
 		this->bias = b;
 		this->valoresEntradas[this->qtdEntradas] = this->bias;
 	}
+	float funcao_ativacao(float net, float a) {
+		switch (funcao) {
+			case 1:
+				/*	logistica
+								1
+					y(n) = ---------------
+							1 + exp(-a.net)
+				*/
+				return (1.0 / (1.0 + exp(-a * net)));
+				break;
+			case 2:
+				/*	tangente hiperbolica
+							exp(a.net) - exp(-a.net)
+					y(n) = ------------------------
+							exp(a.net) + exp(-a.net)
+				*/
+				return ((exp(a * net) - exp(-a * net)) / (exp(a * net) + exp(-a * net)));
+				break;
+			default:
+				return net;
+				break;
+		}
+	}
 
 	void dealloc() {	// atualizar
 		for (int aux = 0; aux < quantidadeCamadas - 2; aux++) {
@@ -174,7 +201,7 @@ class RedeNeural {
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			printf("C: %i T:%i\n", camadaAtual, this->tamanhoDaCamada(camadaAtual));
 			for (int neuronio = 0; neuronio < this->tamanhoDaCamada(camadaAtual); neuronio++) {
-				printf("\n\tN: %i Q: %i S: %.2f/P: ", neuronio, camadas[camadaAtual].neuronio[neuronio].quantidade,
+				printf("\n\tN: %i Q: %i S: %.3f/P: ", neuronio, camadas[camadaAtual].neuronio[neuronio].quantidade,
 							 camadas[camadaAtual].neuronio[neuronio].saida);
 				for (int peso = 0; peso < camadas[camadaAtual].neuronio[neuronio].quantidade; peso++) {
 					printf("%.2f ", camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso]);
@@ -185,7 +212,7 @@ class RedeNeural {
 		printf("saidas\n");
 		printf("C: %i T:%i\n", quantidadeCamadas - 2, qtdSaidas);
 		for (int aux = 0; aux < qtdSaidas; aux++) {
-			printf("\n\tN: %i Q: %i S: %.2f/P: ", aux, neuroniosSaidas[aux].quantidade, neuroniosSaidas[aux].saida);
+			printf("\n\tN: %i Q: %i S: %.3f/P: ", aux, neuroniosSaidas[aux].quantidade, neuroniosSaidas[aux].saida);
 			for (int aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
 				printf("%.2f ", neuroniosSaidas[aux].pesosEntrada[aux2]);
 			}
@@ -229,7 +256,9 @@ class RedeNeural {
 			for (int neuronioAtual = 0; neuronioAtual < camadas[camadaAtual].tamanho; neuronioAtual++) {
 				bufferB[neuronioAtual] =
 						calculaNeuronio(camadaAtual, neuronioAtual, bufferA, camadas[camadaAtual].neuronio[neuronioAtual].quantidade);
-				camadas[camadaAtual].neuronio[neuronioAtual].saida = bufferB[neuronioAtual];
+				camadas[camadaAtual].neuronio[neuronioAtual].saida2 = bufferB[neuronioAtual];
+				camadas[camadaAtual].neuronio[neuronioAtual].saida = funcao_ativacao(bufferB[neuronioAtual], 1.0f);
+				bufferB[neuronioAtual] = funcao_ativacao(bufferB[neuronioAtual], 1.0f);
 			}
 			//  move o buffer B para o A
 			bufferB[camadas[camadaAtual].tamanho] = this->bias;
@@ -242,27 +271,43 @@ class RedeNeural {
 			for (int posicao = 0; posicao < neuroniosSaidas[neuronioAtual].quantidade; posicao++) {
 				this->valoresSaidas[neuronioAtual] += ((bufferA[posicao]) * (neuroniosSaidas[neuronioAtual].pesosEntrada[posicao]));
 			}
-			neuroniosSaidas[neuronioAtual].saida = this->valoresSaidas[neuronioAtual];
+			neuroniosSaidas[neuronioAtual].saida = funcao_ativacao(this->valoresSaidas[neuronioAtual], 1.0f);
+			neuroniosSaidas[neuronioAtual].saida2 = this->valoresSaidas[neuronioAtual];
+			this->valoresSaidas[neuronioAtual] = funcao_ativacao(this->valoresSaidas[neuronioAtual], 1.0f);
 		}
 		//  move o buffer B para o A
 	}
 };
 
 void debugSetter(RedeNeural rn) {
-	rn.setPeso(0, 0, 0, 1.0f);
-	rn.setPeso(0, 0, 1, 1.0f);
-	rn.setPeso(0, 0, 2, 1.0f);
-	rn.setPeso(1, 0, 0, 1.0f);
-	rn.setPeso(1, 0, 1, 0.2f);
-	rn.valoresEntradas[0] = 1.0f;
-	rn.valoresEntradas[1] = 1.0f;
+	// c1
+	// n1
+	rn.setPeso(0, 0, 0, 0.1f);
+	rn.setPeso(0, 0, 1, 0.2f);
+	rn.setPeso(0, 0, 2, -0.1f);
+	rn.setPeso(0, 0, 3, -0.2f);
+	rn.setPeso(0, 0, 4, 0.1f);
+	// n2
+	rn.setPeso(0, 1, 0, 0.3f);
+	rn.setPeso(0, 1, 1, -0.1f);
+	rn.setPeso(0, 1, 2, -0.3f);
+	rn.setPeso(0, 1, 3, 0.4f);
+	rn.setPeso(0, 1, 4, 0.2f);
+	// c2
+	rn.setPeso(1, 0, 0, 0.1f);
+	rn.setPeso(1, 0, 1, 0.3f);
+	rn.setPeso(1, 0, 2, 0.4f);
+	rn.valoresEntradas[0] = 0.1f;
+	rn.valoresEntradas[1] = 0.4f;
+	rn.valoresEntradas[2] = -0.1f;
+	rn.valoresEntradas[3] = 0.3f;
 }
 
 int main() {	// essa parte é só para testar
-	int x[] = {1, 0};
-	RedeNeural rect(2, x, 1);
+	int x[] = {2, 0};
+	RedeNeural rect(4, x, 1);
 	rect.seed = 2;
-	rect.randomCreate();
+	// rect.randomCreate();
 	debugSetter(rect);
 	rect.propagacao();
 	rect.printRede();
