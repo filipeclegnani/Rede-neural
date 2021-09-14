@@ -10,7 +10,7 @@ int tamanhoVetorInt(int *i) {
 	return tamanho;
 }
 
-void transfereBuffersFloat(float **A, float *B, int sizeB) {
+void transfereBuffersdouble(double **A, double *B, int sizeB) {
 	if (*A != 0) {
 		free(*A);
 	}
@@ -20,7 +20,7 @@ void transfereBuffersFloat(float **A, float *B, int sizeB) {
 	if (sizeB <= 0) {
 		printf("transferencia de buffer falhou, sizeB inválido");
 	}
-	*A = (float *)malloc(sizeof(float) * (sizeB));
+	*A = (double *)malloc(sizeof(double) * (sizeB));
 	for (int aux = 0; aux < sizeB; aux++) {
 		(*A)[aux] = B[aux];
 	}
@@ -28,9 +28,9 @@ void transfereBuffersFloat(float **A, float *B, int sizeB) {
 
 typedef struct {
 	int quantidade;
-	float *pesosEntrada;
-	float saida;	 // saida de todas as multiplicações com a função
-	float saida2;	 // saida de todas as multiplicações sem a função
+	double *pesosEntrada;
+	double saida;		// saida de todas as multiplicações com a função
+	double saida2;	// saida de todas as multiplicações sem a função
 } NEURONIOS;
 
 typedef struct {
@@ -38,27 +38,27 @@ typedef struct {
 	NEURONIOS *neuronio;
 } CAMADA;
 
-float randomFloat() {	 // gera numero aleatório entre 0 e 1
+double randomdouble() {	 // gera numero aleatório entre 0 e 1
 	// pode ser 0 mas não pode ser 1
-	return (float)(rand() % 1000) / 1000;
+	return (double)(rand() % 1000) / 1000;
 }	 // rever
 
 class RedeNeural {
  private:
 	int quantidadeCamadas;
-	float erro;								 // sugerido 0.01
-	float taxaDeAprendizagem;	 // sugerido 0.001
+	double erro;								// sugerido 0.01
+	double taxaDeAprendizagem;	// sugerido 0.001
 	CAMADA *camadas;
 	NEURONIOS *neuroniosSaidas;
 	int qtdEntradas;
 	int qtdSaidas;
-	float bias;
+	double bias;
 
  public:
 	int funcao;
-	float *valoresEntradas;
-	float *valoresSaidas;
-	float *saidaDesejada;
+	double *valoresEntradas;
+	double *valoresSaidas;
+	double *saidaDesejada;
 	unsigned int seed;
 	int backpropagationType;
 
@@ -70,9 +70,9 @@ class RedeNeural {
 		taxaDeAprendizagem = 0.1f;
 		erro = 0.1f;
 		quantidadeCamadas = tamanhoVetorInt(internas) + 2;	// entrada + internas + saida
-		valoresEntradas = (float *)malloc(entradas * sizeof(float));
-		valoresSaidas = (float *)malloc(saida * sizeof(float));
-		saidaDesejada = (float *)malloc(saida * sizeof(float));
+		valoresEntradas = (double *)malloc(entradas * sizeof(double));
+		valoresSaidas = (double *)malloc(saida * sizeof(double));
+		saidaDesejada = (double *)malloc(saida * sizeof(double));
 		qtdEntradas = entradas;
 		qtdSaidas = saida;
 		funcao = 2;
@@ -108,7 +108,7 @@ class RedeNeural {
 				}
 
 				// zera os pesos
-				camadas[aux].neuronio[aux2].pesosEntrada = (float *)malloc(sizeof(float) * camadas[aux].neuronio[aux2].quantidade);
+				camadas[aux].neuronio[aux2].pesosEntrada = (double *)malloc(sizeof(double) * camadas[aux].neuronio[aux2].quantidade);
 				// R: X é a quantidade de neuronios da camada anterior
 				for (aux3 = 0; aux3 < camadas[aux].neuronio[aux2].quantidade; aux3++) {
 					camadas[aux].neuronio[aux2].pesosEntrada[aux3] = 0.0f;
@@ -119,7 +119,7 @@ class RedeNeural {
 		neuroniosSaidas = (NEURONIOS *)malloc(saida * sizeof(NEURONIOS));
 		for (aux = 0; aux < saida; aux++) {
 			neuroniosSaidas[aux].quantidade = camadas[quantidadeCamadas - 3].tamanho + 1;
-			neuroniosSaidas[aux].pesosEntrada = (float *)malloc(neuroniosSaidas[aux].quantidade * sizeof(float));
+			neuroniosSaidas[aux].pesosEntrada = (double *)malloc(neuroniosSaidas[aux].quantidade * sizeof(double));
 			// zera pesos de saida
 			for (aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
 				neuroniosSaidas[aux].pesosEntrada[aux2] = 0.0f;
@@ -127,12 +127,12 @@ class RedeNeural {
 		}
 	}
 
-	void setbias(float b) {
+	void setbias(double b) {
 		this->bias = b;
 		this->valoresEntradas[this->qtdEntradas] = this->bias;
 	}
 
-	float funcao_ativacao(float net, float a) {
+	double funcao_ativacao(double net, double a) {
 		switch (funcao) {
 			case 1:
 				/*	logistica
@@ -156,7 +156,7 @@ class RedeNeural {
 		}
 	}
 
-	float derivada(float net, float a) {
+	double derivada(double net, double a) {
 		switch (funcao) {
 			case 1:
 				/*
@@ -188,15 +188,15 @@ class RedeNeural {
 			}
 			free(camadas[aux].neuronio);
 		}
-		free(camadas);
-		free(valoresEntradas);
-		free(valoresSaidas);
+		// free(camadas);
+		// free(valoresEntradas);
+		// free(valoresSaidas);
 		return;
 	}
 
 	int tamanhoDaCamada(int camada) { return camadas[camada].tamanho; }
 
-	void setPeso(int camada, int neuronio, int entrada, float peso) {
+	void setPeso(int camada, int neuronio, int entrada, double peso) {
 		if (camada == quantidadeCamadas - 2) {
 			neuroniosSaidas[neuronio].pesosEntrada[entrada] = peso;
 		} else {
@@ -206,14 +206,14 @@ class RedeNeural {
 		return;
 	}
 
-	float calculaNeuronio(int camadaX, int neuronioX, float *valores, int tamanho) {
+	double calculaNeuronio(int camadaX, int neuronioX, double *valores, int tamanho) {
 		// camadaX 		a camada com os neuronios
 		// neuronioX 	o neuronio da camada
 		// valores		os valores a serem multiplicados
-		// tamanho		num lembro
-		float *saida = &camadas[camadaX].neuronio[neuronioX].saida;
+		// tamanho		tamanho da camada valores
+		double *saida = &camadas[camadaX].neuronio[neuronioX].saida;
 		if (camadas[camadaX].neuronio[neuronioX].quantidade != tamanho) {
-			printf("erro %i é diferende de %i", tamanho, camadas[camadaX].neuronio[neuronioX].quantidade);
+			printf("erro %i é diferente de %i", tamanho, camadas[camadaX].neuronio[neuronioX].quantidade);
 			return 0.0f;
 		}
 		for (int posicao = 0; posicao < tamanho; posicao++) {
@@ -262,27 +262,27 @@ class RedeNeural {
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			for (int neuronio = 0; neuronio < this->tamanhoDaCamada(camadaAtual); neuronio++) {
 				for (int peso = 0; peso < camadas[camadaAtual].neuronio[neuronio].quantidade; peso++) {
-					camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso] = randomFloat();
+					camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso] = randomdouble();
 				}
 			}
 		}
 		for (int aux = 0; aux < qtdSaidas; aux++) {
 			for (int aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
-				neuroniosSaidas[aux].pesosEntrada[aux2] = randomFloat();
+				neuroniosSaidas[aux].pesosEntrada[aux2] = randomdouble();
 			}
 		}
 	}
 
 	void propagacao() {
-		float *bufferA = 0, *bufferB = 0;
+		double *bufferA = 0, *bufferB = 0;
 		// alocar B
 		// pega as entradas
 		// manda pra um buffer A
-		transfereBuffersFloat(&bufferA, this->valoresEntradas, this->qtdEntradas + 1);
+		transfereBuffersdouble(&bufferA, this->valoresEntradas, this->qtdEntradas + 1);
 		// 	faz as multiplicaões e retorna para um buffer B
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			// circular todas as camadas incluindo a inicial e excluindo a final
-			bufferB = (float *)malloc((camadas[camadaAtual].tamanho) * sizeof(float));
+			bufferB = (double *)malloc((camadas[camadaAtual].tamanho) * sizeof(double));
 			for (int neuronioAtual = 0; neuronioAtual < camadas[camadaAtual].tamanho; neuronioAtual++) {
 				bufferB[neuronioAtual] =
 						calculaNeuronio(camadaAtual, neuronioAtual, bufferA, camadas[camadaAtual].neuronio[neuronioAtual].quantidade);
@@ -292,8 +292,8 @@ class RedeNeural {
 			}
 			//  move o buffer B para o A
 			bufferB[camadas[camadaAtual].tamanho] = this->bias;
-			transfereBuffersFloat(&bufferA, bufferB, camadas[camadaAtual].tamanho + 1);
-			free(bufferB);
+			transfereBuffersdouble(&bufferA, bufferB, camadas[camadaAtual].tamanho + 1);
+			// free(bufferB);
 		}
 		// repete
 		// manda buffer B para saida
@@ -305,27 +305,20 @@ class RedeNeural {
 			neuroniosSaidas[neuronioAtual].saida2 = this->valoresSaidas[neuronioAtual];
 			this->valoresSaidas[neuronioAtual] = funcao_ativacao(this->valoresSaidas[neuronioAtual], 1.0f);
 		}
+	}
+	void retroPorpagacao() {
 		//	-------------------------
 		//	|	Retropropagação		|
 		//	-------------------------
-		float erroQuadratico = 0.0f;
-		float erroMedio = 0.0f;
 		if (this->backpropagationType == 1) {
-			for (int neuronioAtual = 0; neuronioAtual < this->qtdSaidas; neuronioAtual++) {
-				erroQuadratico =
-						(saidaDesejada[neuronioAtual] - neuroniosSaidas[neuronioAtual].saida) * derivada(neuroniosSaidas[neuronioAtual].saida2, 1.0f);
-				for (int posicao = 0; posicao < neuroniosSaidas[neuronioAtual].quantidade; posicao++) {
-					neuroniosSaidas[neuronioAtual].pesosEntrada[posicao] += (taxaDeAprendizagem * saidaDesejada[neuronioAtual] * erroQuadratico);
-				}
-			}
-
-			for (int camadaAtual = quantidadeCamadas - 2; camadaAtual >= 0; camadaAtual--) {
-				for (int neuronioAtual = 0; neuronioAtual < camadas[camadaAtual].tamanho; neuronioAtual++) {
-					erroQuadratico =
-							(saidaDesejada[neuronioAtual] - neuroniosSaidas[neuronioAtual].saida) * derivada(neuroniosSaidas[neuronioAtual].saida2, 1.0f);
-					for (int posicao = 0; posicao < neuroniosSaidas[neuronioAtual].quantidade; posicao++) {
-						neuroniosSaidas[neuronioAtual].pesosEntrada[posicao] += (taxaDeAprendizagem * saidaDesejada[neuronioAtual] * erroQuadratico);
-					}
+			for (int neuronioA = 0; neuronioA < this->qtdSaidas; neuronioA++) {
+				// percorre os neuronios de saida
+				// erro = (desejado - obtido) * dervida(net)
+				double erro = (saidaDesejada[neuronioA] - neuroniosSaidas[neuronioA].saida) * derivada(neuroniosSaidas[neuronioA].saida2, 1.0f);
+				for (int peso = 0; peso < neuroniosSaidas[neuronioA].quantidade; peso++) {
+					// percore os pesos de cada neuronio
+					//Δwjk = ɳ . yj . ek
+					// wjk (novo) = wjk + Δwjk
 				}
 			}
 		}
@@ -364,6 +357,7 @@ int main() {	// essa parte é só para testar
 	// rect.randomCreate();
 	debugSetter(rect);
 	rect.propagacao();
+	rect.retroPorpagacao();
 	rect.printRede();
 	rect.dealloc();
 	return 0;
