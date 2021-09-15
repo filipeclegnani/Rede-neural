@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int tamanhoVetorInt(int *i) {
-	int tamanho = 0;
+unsigned long long int tamanhoVetorInt(unsigned long long int *i) {
+	unsigned long long int tamanho = 0;
 	while (i[tamanho] != 0) {
 		tamanho++;
 	}
@@ -62,14 +62,15 @@ class RedeNeural {
 	unsigned int seed;
 	int backpropagationType;
 
-	RedeNeural(int entradas, int *internas, int saida) {
+	RedeNeural(unsigned long int entradas, unsigned long int *internas, unsigned long int saida) {
 		// entradas é a quantidade de valores entrados
 		// internas é um vetor de inteiros com a quantidade de neuronios de cada
 		// camada interna saida é a quantidade de neuronios de saida
-		int aux = 0, aux2 = 0, aux3 = 0;
+		unsigned long int aux = 0;
+		int aux2 = 0, aux3 = 0;
 		taxaDeAprendizagem = 0.1f;
 		erro = 0.1f;
-		quantidadeCamadas = tamanhoVetorInt(internas) + 2;	// entrada + internas + saida
+		quantidadeCamadas = tamanhoVetorInt((unsigned long long *)internas) + 2;	// entrada + internas + saida
 		valoresEntradas = (double *)malloc(entradas * sizeof(double));
 		valoresSaidas = (double *)malloc(saida * sizeof(double));
 		saidaDesejada = (double *)malloc(saida * sizeof(double));
@@ -82,7 +83,7 @@ class RedeNeural {
 			aux++;
 		}
 		aux = 0;
-		while (aux < entradas) {	// zera os valores de saida
+		while (aux < saida) {	 // zera os valores de saida
 			valoresSaidas[aux] = 0;
 			aux++;
 		}
@@ -188,9 +189,9 @@ class RedeNeural {
 			}
 			free(camadas[aux].neuronio);
 		}
-		// free(camadas);
-		// free(valoresEntradas);
-		// free(valoresSaidas);
+		free(camadas);
+		free(valoresEntradas);
+		free(valoresSaidas);
 		return;
 	}
 
@@ -231,26 +232,26 @@ class RedeNeural {
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			printf("C: %i T:%i\n", camadaAtual, this->tamanhoDaCamada(camadaAtual));
 			for (int neuronio = 0; neuronio < this->tamanhoDaCamada(camadaAtual); neuronio++) {
-				printf("\n\tN: %i Q: %i S: %.3f/P: ", neuronio, camadas[camadaAtual].neuronio[neuronio].quantidade,
+				printf("\tN: %i Q: %i S: %.3f/P: ", neuronio, camadas[camadaAtual].neuronio[neuronio].quantidade,
 							 camadas[camadaAtual].neuronio[neuronio].saida);
 				for (int peso = 0; peso < camadas[camadaAtual].neuronio[neuronio].quantidade; peso++) {
-					printf("%.2f ", camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso]);
+					printf("%.4f ", camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso]);
 				}
+				printf("B\n");
 			}
-			printf("B\n");
 		}
 		printf("saidas\n");
 		printf("C: %i T:%i\n", quantidadeCamadas - 2, qtdSaidas);
 		for (int aux = 0; aux < qtdSaidas; aux++) {
 			printf("\n\tN: %i Q: %i S: %.3f/P: ", aux, neuroniosSaidas[aux].quantidade, neuroniosSaidas[aux].saida);
 			for (int aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
-				printf("%.2f ", neuroniosSaidas[aux].pesosEntrada[aux2]);
+				printf("%.4f ", neuroniosSaidas[aux].pesosEntrada[aux2]);
 			}
+			printf("B\n");
 		}
-		printf("B\n");
 		printf("Saidas: \n");
 		for (int i = 0; i < qtdSaidas; i++) {
-			printf("%.2f ", valoresSaidas[i]);
+			printf("%.4f ", valoresSaidas[i]);
 		}
 		printf("\n");
 	}
@@ -282,7 +283,7 @@ class RedeNeural {
 		// 	faz as multiplicaões e retorna para um buffer B
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			// circular todas as camadas incluindo a inicial e excluindo a final
-			bufferB = (double *)malloc((camadas[camadaAtual].tamanho) * sizeof(double));
+			bufferB = (double *)malloc(((camadas[camadaAtual].tamanho) + 1) * sizeof(double));	// não aloca o suficiente
 			for (int neuronioAtual = 0; neuronioAtual < camadas[camadaAtual].tamanho; neuronioAtual++) {
 				bufferB[neuronioAtual] =
 						calculaNeuronio(camadaAtual, neuronioAtual, bufferA, camadas[camadaAtual].neuronio[neuronioAtual].quantidade);
@@ -293,7 +294,7 @@ class RedeNeural {
 			//  move o buffer B para o A
 			bufferB[camadas[camadaAtual].tamanho] = this->bias;
 			transfereBuffersdouble(&bufferA, bufferB, camadas[camadaAtual].tamanho + 1);
-			// free(bufferB);
+			free(bufferB);
 		}
 		// repete
 		// manda buffer B para saida
@@ -311,15 +312,66 @@ class RedeNeural {
 		//	|	Retropropagação		|
 		//	-------------------------
 		if (this->backpropagationType == 1) {
+			double somaErro = 0.0f;
+			double erroSomado = 0.0f;
 			for (int neuronioA = 0; neuronioA < this->qtdSaidas; neuronioA++) {
 				// percorre os neuronios de saida
 				// erro = (desejado - obtido) * dervida(net)
 				double erro = (saidaDesejada[neuronioA] - neuroniosSaidas[neuronioA].saida) * derivada(neuroniosSaidas[neuronioA].saida2, 1.0f);
+				somaErro += erro;
 				for (int peso = 0; peso < neuroniosSaidas[neuronioA].quantidade; peso++) {
 					// percore os pesos de cada neuronio
 					//Δwjk = ɳ . yj . ek
 					// wjk (novo) = wjk + Δwjk
+					double deltaPeso = 0.0f;
+					double pesoNovo = 0.0f;
+					if (peso < neuroniosSaidas[neuronioA].quantidade - 1) {
+						deltaPeso = taxaDeAprendizagem * erro * camadas[0].neuronio[peso].saida;	// ok
+					} else {
+						deltaPeso = taxaDeAprendizagem * erro * bias;	 // ok
+					}
+					pesoNovo = deltaPeso + neuroniosSaidas[neuronioA].pesosEntrada[peso];
+					neuroniosSaidas[neuronioA].pesosEntrada[peso] = pesoNovo;
 				}
+			}
+			erroSomado = somaErro;
+			somaErro = 0.0f;
+			for (int camadaAt = quantidadeCamadas - 3; camadaAt >= 0; camadaAt--) {
+				// percorre cada camada de tras pra frente
+				for (int neuronioAt = 0; neuronioAt < camadas[camadaAt].tamanho; neuronioAt++) {
+					// percorre os neuronios da camada
+					// é a primeira camada antes da saida?
+					bool antesSaida = (camadaAt == (quantidadeCamadas - 3));
+					for (int neuronioAn = 0; antesSaida ? neuronioAn < qtdSaidas : neuronioAn < camadas[camadaAt + 1].tamanho; neuronioAn++) {
+						// percorre a camada anterior a do erro
+						// erro =  ( ƩErro . pesoSaidaRecalculado ) . f’(saida(sem função))
+						double erro = 0.0f;
+						if (antesSaida) {
+							erro = (erroSomado * neuroniosSaidas[neuronioAn].pesosEntrada[neuronioAt]) *
+										 derivada(camadas[camadaAt].neuronio[neuronioAt].saida2, 1.0f);
+						} else {
+							erro = (erroSomado * camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[neuronioAt]) *
+										 derivada(camadas[camadaAt].neuronio[neuronioAt].saida2, 1.0f);
+						}
+						somaErro += erro;
+						for (int peso = 0; peso < camadas[camadaAt].neuronio[neuronioAt].quantidade; peso++) {
+							// percore os pesos de cada neuronio
+							//Δwjk = ɳ . yj . ek
+							// wjk (novo) = wjk + Δwjk
+							double deltaPeso = 0.0f;
+							double pesoNovo = 0.0f;
+							if (peso < camadas[camadaAt].neuronio[neuronioAt].quantidade - 1) {
+								deltaPeso = taxaDeAprendizagem * erro * camadas[0].neuronio[peso].saida;	// ok
+							} else {
+								deltaPeso = taxaDeAprendizagem * erro * bias;	 // ok
+							}
+							pesoNovo = deltaPeso + camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[peso];
+							camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[peso] = pesoNovo;
+						}
+					}
+				}
+				erroSomado = somaErro;
+				somaErro = 0.0f;
 			}
 		}
 	}
@@ -351,14 +403,14 @@ void debugSetter(RedeNeural rn) {
 }
 
 int main() {	// essa parte é só para testar
-	int x[] = {2, 0};
-	RedeNeural rect(4, x, 1);
+	int x[] = {400, 400, 0};
+	RedeNeural rect((unsigned long)(96000), x, (unsigned long)1);
 	rect.seed = 2;
-	// rect.randomCreate();
+	rect.randomCreate();
 	debugSetter(rect);
 	rect.propagacao();
 	rect.retroPorpagacao();
-	rect.printRede();
-	rect.dealloc();
+	// rect.printRede();
+	// rect.dealloc();		problematico
 	return 0;
 }

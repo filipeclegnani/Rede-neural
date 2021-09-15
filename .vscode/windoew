@@ -2,15 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "g++.exe - Criar e depurar o arquivo ativo",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${fileDirname}/${fileBasenameNoExtension}",
+      "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${fileDirname}",
+      "cwd": "C:\\MinGW\\bin",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
+      "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe",
       "setupCommands": [
         {
           "description": "Habilitar a reformatação automática para gdb",
@@ -18,7 +20,7 @@
           "ignoreFailures": true
         }
       ],
-      "miDebuggerPath": "/usr/bin/gdb"
+      "preLaunchTask": "C/C++: g++.exe arquivo de build ativo"
     }
   ]
 }
