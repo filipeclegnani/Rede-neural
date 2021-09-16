@@ -1,6 +1,14 @@
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
+
+/*
+	autores:
+		Dara Julia Southier
+		Filipe Casaletti Legnani
+		Julia Kelly Prestes de Oliveira Da Silva
+		Paulo Ricardo Savaris dos Santos
+	data: 16/09/2021
+*/
 
 unsigned long long int tamanhoVetorInt(unsigned long long int *i) {
 	unsigned long long int tamanho = 0;
@@ -43,19 +51,8 @@ double randomDouble() {	 // gera numero aleatório entre -1 e 1
 	return (double)((rand() % 2000) - 1000) / 1000;
 }
 /*
-	==========================
-	|  Cabeçalho de arquivo  |
-	==========================
-	quantidade de camadas
-	qtdEntradas
-	qtdSaidas
-	bias
-	funcao
-	backpropagationType
-	taxaDeAprendizagem
-	camadas[x].tamanho
-	camadas[x].neuronio[y].quantidade
-	camadas[x].neuronio[y].pesosEntrada[z]
+	Classe criada com a finalidade de facilitar a criação de uma rede neural fazendo todos
+	os calculos de alocamento, desalocamento, propagação e retropropagação automaticamento
 */
 class RedeNeural {
  private:
@@ -74,6 +71,15 @@ class RedeNeural {
 	unsigned int seed;
 	int backpropagationType;		// salvar
 	double taxaDeAprendizagem;	// sugerido 0.001	//salvar
+
+	/*
+		construtor da classe RedeNeural.
+		params:
+		entradas - usado para definir a quantidade de entradas na rede.
+		internas - vetor terminado em 0 que deve conter a quantidade
+		de neuronios que cada camada deve conter.
+		saida - quantidade de neuronios que a camada de saida deve ter.
+	*/
 
 	RedeNeural(unsigned long entradas, unsigned long *internas, unsigned long saida) {
 		// entradas é a quantidade de valores entrados
@@ -527,57 +533,9 @@ class RedeNeural {
 				fscanf(fp, "%50[^\n]s", linha);
 				fscanf(fp, "%*c");
 				sscanf(linha, "%lf", &neuroniosSaidas[neuronioAt].pesosEntrada[pesoAt]);
-				printf("%s = %.2f\n", linha, neuroniosSaidas[neuronioAt].pesosEntrada[pesoAt]);
 			}
 		}
 		//
 		fclose(fp);
 	}
 };
-
-void debugSetter(RedeNeural rn) {
-	// c1
-	// n1
-	rn.setPeso(0, 0, 0, 0.1f);
-	rn.setPeso(0, 0, 1, 0.2f);
-	rn.setPeso(0, 0, 2, -0.1f);
-	rn.setPeso(0, 0, 3, -0.2f);
-	rn.setPeso(0, 0, 4, 0.1f);
-	// n2
-	rn.setPeso(0, 1, 0, 0.3f);
-	rn.setPeso(0, 1, 1, -0.1f);
-	rn.setPeso(0, 1, 2, -0.3f);
-	rn.setPeso(0, 1, 3, 0.4f);
-	rn.setPeso(0, 1, 4, 0.2f);
-	// c2
-	rn.setPeso(1, 0, 0, 0.1f);
-	rn.setPeso(1, 0, 1, 0.3f);
-	rn.setPeso(1, 0, 2, 0.4f);
-	rn.valoresEntradas[0] = 0.1f;
-	rn.valoresEntradas[1] = 0.4f;
-	rn.valoresEntradas[2] = -0.1f;
-	rn.valoresEntradas[3] = 0.3f;
-	rn.saidaDesejada[0] = 1.0f;
-}
-
-int main() {	// essa parte é só para testar
-	unsigned long int x[] = {2, 0, 0};
-	unsigned long int entradas = 4;
-	unsigned long int saidas = 1;
-	RedeNeural rect(entradas, x, saidas);
-	rect.seed = 2;
-	rect.randomCreate();
-	// debugSetter(rect);
-	// printf("propagando\n");
-	rect.propagacao();
-	// rect.printRede();
-	// printf("\nretropropagando\n");
-	// rect.retroPorpagacao();
-	// printf("salvando\n");
-	// rect.gravaRNA("arquivo.rna");
-	rect.carregaRNA("arquivo.rna");
-	// printf("salvo\n");
-	rect.printRede();
-	// rect.dealloc();
-	return 0;
-}
