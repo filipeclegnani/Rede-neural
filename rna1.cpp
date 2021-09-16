@@ -105,26 +105,27 @@ class RedeNeural {
 		camadas = (CAMADA *)malloc((quantidadeCamadas - 2) * sizeof(CAMADA));
 
 		// aloca os pesos
-		for (aux = 0; aux < quantidadeCamadas - 2; aux++) {
+		for (int camadaAt = 0; camadaAt < quantidadeCamadas - 2; camadaAt++) {
 			// definir quantidades de neuronios
-			camadas[aux].tamanho = internas[aux];
+			camadas[camadaAt].tamanho = internas[camadaAt];
 			// alocar neuronios
-			camadas[aux].neuronio = (NEURONIOS *)malloc(internas[aux] * sizeof(NEURONIOS));
+			camadas[camadaAt].neuronio = (NEURONIOS *)malloc(internas[camadaAt] * sizeof(NEURONIOS));
 
-			for (aux2 = 0; aux2 < internas[aux]; aux2++) {
+			for (int neuronioAt = 0; neuronioAt < internas[camadaAt]; neuronioAt++) {
 				// aloca os pesos e peso bias
 
-				if (aux == 0) {
-					camadas[aux].neuronio[aux2].quantidade = entradas + 1;
+				if (camadaAt == 0) {
+					camadas[camadaAt].neuronio[neuronioAt].quantidade = entradas + 1;
 				} else {
-					camadas[aux].neuronio[aux2].quantidade = camadas[aux - 1].tamanho + 1;
+					camadas[camadaAt].neuronio[neuronioAt].quantidade = camadas[camadaAt - 1].tamanho + 1;
 				}
 
 				// zera os pesos
-				camadas[aux].neuronio[aux2].pesosEntrada = (double *)malloc(sizeof(double) * camadas[aux].neuronio[aux2].quantidade);
+				camadas[camadaAt].neuronio[neuronioAt].pesosEntrada =
+						(double *)malloc(sizeof(double) * camadas[camadaAt].neuronio[neuronioAt].quantidade);
 				// R: X é a quantidade de neuronios da camada anterior
-				for (aux3 = 0; aux3 < camadas[aux].neuronio[aux2].quantidade; aux3++) {
-					camadas[aux].neuronio[aux2].pesosEntrada[aux3] = 0.0f;
+				for (int pesoAt = 0; pesoAt < camadas[camadaAt].neuronio[neuronioAt].quantidade; pesoAt++) {
+					camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[pesoAt] = 0.0f;
 				}
 			}
 		}
@@ -197,13 +198,23 @@ class RedeNeural {
 	void dealloc() {	// atualizar
 		for (int aux = 0; aux < quantidadeCamadas - 2; aux++) {
 			for (int aux2 = 0; aux2 < camadas[aux].tamanho; aux2++) {
-				free(camadas[aux].neuronio[aux2].pesosEntrada);
+				if (camadas[aux].neuronio[aux2].pesosEntrada) {
+					free(camadas[aux].neuronio[aux2].pesosEntrada);
+				}
 			}
-			free(camadas[aux].neuronio);
+			if (camadas[aux].neuronio) {
+				free(camadas[aux].neuronio);
+			}
 		}
-		free(camadas);
-		free(valoresEntradas);
-		free(valoresSaidas);
+		if (camadas) {
+			free(camadas);
+		}
+		if (valoresEntradas) {
+			free(valoresEntradas);
+		}
+		if (valoresSaidas) {
+			free(valoresSaidas);
+		}
 		return;
 	}
 
@@ -349,10 +360,8 @@ class RedeNeural {
 			erroSomado = somaErro;
 			somaErro = 0.0f;
 			for (int camadaAt = quantidadeCamadas - 3; camadaAt >= 0; camadaAt--) {
-				printf("camada: %i\n", camadaAt);
 				// percorre cada camada de tras pra frente
 				for (int neuronioAt = 0; neuronioAt < camadas[camadaAt].tamanho; neuronioAt++) {
-					printf("neuronio: %i\n", neuronioAt);
 					// percorre os neuronios da camada
 					// é a primeira camada antes da saida?
 					bool antesSaida = (camadaAt == (quantidadeCamadas - 3));
@@ -424,8 +433,104 @@ class RedeNeural {
 				}
 			}
 		}
+		// fprintf(fp, "%i\n", qtdSaidas);
+		for (int neuronioAt = 0; neuronioAt < qtdSaidas; neuronioAt++) {
+			fprintf(fp, "%i\n", neuroniosSaidas[neuronioAt].quantidade);
+			for (int pesoAt = 0; pesoAt < neuroniosSaidas[neuronioAt].quantidade; pesoAt++) {
+				fprintf(fp, "%.10f\n", neuroniosSaidas[neuronioAt].pesosEntrada[pesoAt]);
+			}
+		}
 		fprintf(fp, "ERNAFile");
 		fflush(fp);
+		fclose(fp);
+	}
+
+	bool confereheader(char *string) {
+		if (string[0] == 'R')
+			if (string[1] == 'N')
+				if (string[2] == 'A')
+					if (string[3] == 'F')
+						if (string[4] == 'i')
+							if (string[5] == 'l')
+								if (string[6] == 'e') return true;
+		return false;
+	}
+
+	void carregaRNA(char *nomeArquivo) {
+		FILE *fp = fopen(nomeArquivo, "r+");
+		this->dealloc();
+		if (fp == NULL) {
+			printf("Erro ao carregar arquivo");
+			return;
+		}
+		char linha[50];
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		if (!confereheader(linha)) {
+			printf("Erro arquivo invalido\n");
+			return;
+		}
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%i", &quantidadeCamadas);
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%i", &qtdEntradas);
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%i", &qtdSaidas);
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%lf", &bias);
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%i", &funcao);
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%i", &backpropagationType);
+		fscanf(fp, "%50[^\n]s", linha);
+		fscanf(fp, "%*c");
+		sscanf(linha, "%lf", &taxaDeAprendizagem);
+
+		camadas = (CAMADA *)malloc((quantidadeCamadas - 2) * sizeof(CAMADA));
+
+		for (int camadaAt = 0; camadaAt < quantidadeCamadas - 2; camadaAt++) {
+			// circula cada camada
+			fscanf(fp, "%50[^\n]s", linha);
+			fscanf(fp, "%*c");
+			sscanf(linha, "%i", &camadas[camadaAt].tamanho);
+			camadas[camadaAt].neuronio = (NEURONIOS *)malloc(camadas[camadaAt].tamanho * sizeof(NEURONIOS));
+			for (int neuronioAt = 0; neuronioAt < camadas[camadaAt].tamanho; neuronioAt++) {
+				fscanf(fp, "%50[^\n]s", linha);
+				fscanf(fp, "%*c");
+				sscanf(linha, "%i", &camadas[camadaAt].neuronio[neuronioAt].quantidade);
+
+				// zera os pesos
+				camadas[camadaAt].neuronio[neuronioAt].pesosEntrada =
+						(double *)malloc(sizeof(double) * camadas[camadaAt].neuronio[neuronioAt].quantidade);
+				for (int pesoAt = 0; pesoAt < camadas[camadaAt].neuronio[neuronioAt].quantidade; pesoAt++) {
+					fscanf(fp, "%50[^\n]s", linha);
+					fscanf(fp, "%*c");
+					sscanf(linha, "%lf", &camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[pesoAt]);
+				}
+			}
+		}
+		// alocar pra saida
+		neuroniosSaidas = (NEURONIOS *)malloc(qtdSaidas * sizeof(NEURONIOS));
+		for (int neuronioAt = 0; neuronioAt < qtdSaidas; neuronioAt++) {
+			fscanf(fp, "%50[^\n]s", linha);
+			fscanf(fp, "%*c");
+			neuroniosSaidas[neuronioAt].quantidade = camadas[quantidadeCamadas - 3].tamanho + 1;
+			neuroniosSaidas[neuronioAt].pesosEntrada = (double *)malloc(neuroniosSaidas[neuronioAt].quantidade * sizeof(double));
+			// zera pesos de saida
+			for (int pesoAt = 0; pesoAt < neuroniosSaidas[neuronioAt].quantidade; pesoAt++) {
+				fscanf(fp, "%50[^\n]s", linha);
+				fscanf(fp, "%*c");
+				sscanf(linha, "%lf", &neuroniosSaidas[neuronioAt].pesosEntrada[pesoAt]);
+				printf("%s = %.2f\n", linha, neuroniosSaidas[neuronioAt].pesosEntrada[pesoAt]);
+			}
+		}
+		//
 		fclose(fp);
 	}
 };
@@ -456,22 +561,23 @@ void debugSetter(RedeNeural rn) {
 }
 
 int main() {	// essa parte é só para testar
-	unsigned long int x[] = {400, 400, 0};
-	unsigned long int entradas = 96000;
+	unsigned long int x[] = {2, 0, 0};
+	unsigned long int entradas = 4;
 	unsigned long int saidas = 1;
 	RedeNeural rect(entradas, x, saidas);
 	rect.seed = 2;
 	rect.randomCreate();
 	// debugSetter(rect);
-	printf("propagando\n");
+	// printf("propagando\n");
 	rect.propagacao();
 	// rect.printRede();
-	printf("\nretropropagando\n");
-	rect.retroPorpagacao();
-	printf("salvando\n");
+	// printf("\nretropropagando\n");
+	// rect.retroPorpagacao();
+	// printf("salvando\n");
 	// rect.gravaRNA("arquivo.rna");
-	printf("salvo\n");
-	// rect.printRede();
-	// rect.dealloc();		problematico
+	rect.carregaRNA("arquivo.rna");
+	// printf("salvo\n");
+	rect.printRede();
+	// rect.dealloc();
 	return 0;
 }
