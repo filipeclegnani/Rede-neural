@@ -38,38 +38,50 @@ typedef struct {
 	NEURONIOS *neuronio;
 } CAMADA;
 
-double randomdouble() {	 // gera numero aleatório entre 0 e 1
+double randomDouble() {	 // gera numero aleatório entre -1 e 1
 	// pode ser 0 mas não pode ser 1
-	return (double)(rand() % 1000) / 1000;
-}	 // rever
-
+	return (double)((rand() % 2000) - 1000) / 1000;
+}
+/*
+	==========================
+	|  Cabeçalho de arquivo  |
+	==========================
+	quantidade de camadas
+	qtdEntradas
+	qtdSaidas
+	bias
+	funcao
+	backpropagationType
+	taxaDeAprendizagem
+	camadas[x].tamanho
+	camadas[x].neuronio[y].quantidade
+	camadas[x].neuronio[y].pesosEntrada[z]
+*/
 class RedeNeural {
  private:
-	int quantidadeCamadas;
-	double erro;								// sugerido 0.01
-	double taxaDeAprendizagem;	// sugerido 0.001
-	CAMADA *camadas;
-	NEURONIOS *neuroniosSaidas;
-	int qtdEntradas;
-	int qtdSaidas;
-	double bias;
+	int quantidadeCamadas;			 // salvar
+	CAMADA *camadas;						 // salvar
+	NEURONIOS *neuroniosSaidas;	 // salvar
+	int qtdEntradas;						 // salvar
+	int qtdSaidas;							 // salvar
+	double bias;								 // salvar
 
  public:
-	int funcao;
+	int funcao;	 // salvar
 	double *valoresEntradas;
 	double *valoresSaidas;
 	double *saidaDesejada;
 	unsigned int seed;
-	int backpropagationType;
+	int backpropagationType;		// salvar
+	double taxaDeAprendizagem;	// sugerido 0.001	//salvar
 
-	RedeNeural(unsigned long int entradas, unsigned long int *internas, unsigned long int saida) {
+	RedeNeural(unsigned long entradas, unsigned long *internas, unsigned long saida) {
 		// entradas é a quantidade de valores entrados
 		// internas é um vetor de inteiros com a quantidade de neuronios de cada
 		// camada interna saida é a quantidade de neuronios de saida
 		unsigned long int aux = 0;
 		int aux2 = 0, aux3 = 0;
 		taxaDeAprendizagem = 0.1f;
-		erro = 0.1f;
 		quantidadeCamadas = tamanhoVetorInt((unsigned long long *)internas) + 2;	// entrada + internas + saida
 		valoresEntradas = (double *)malloc(entradas * sizeof(double));
 		valoresSaidas = (double *)malloc(saida * sizeof(double));
@@ -263,13 +275,13 @@ class RedeNeural {
 		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			for (int neuronio = 0; neuronio < this->tamanhoDaCamada(camadaAtual); neuronio++) {
 				for (int peso = 0; peso < camadas[camadaAtual].neuronio[neuronio].quantidade; peso++) {
-					camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso] = randomdouble();
+					camadas[camadaAtual].neuronio[neuronio].pesosEntrada[peso] = randomDouble();
 				}
 			}
 		}
 		for (int aux = 0; aux < qtdSaidas; aux++) {
 			for (int aux2 = 0; aux2 < neuroniosSaidas[aux].quantidade; aux2++) {
-				neuroniosSaidas[aux].pesosEntrada[aux2] = randomdouble();
+				neuroniosSaidas[aux].pesosEntrada[aux2] = randomDouble();
 			}
 		}
 	}
@@ -321,8 +333,8 @@ class RedeNeural {
 				somaErro += erro;
 				for (int peso = 0; peso < neuroniosSaidas[neuronioA].quantidade; peso++) {
 					// percore os pesos de cada neuronio
-					//Δwjk = ɳ . yj . ek
-					// wjk (novo) = wjk + Δwjk
+					// Dwjk = ɳ . yj . ek
+					// wjk (novo) = wjk + Dwjk
 					double deltaPeso = 0.0f;
 					double pesoNovo = 0.0f;
 					if (peso < neuroniosSaidas[neuronioA].quantidade - 1) {
@@ -337,8 +349,10 @@ class RedeNeural {
 			erroSomado = somaErro;
 			somaErro = 0.0f;
 			for (int camadaAt = quantidadeCamadas - 3; camadaAt >= 0; camadaAt--) {
+				printf("camada: %i\n", camadaAt);
 				// percorre cada camada de tras pra frente
 				for (int neuronioAt = 0; neuronioAt < camadas[camadaAt].tamanho; neuronioAt++) {
+					printf("neuronio: %i\n", neuronioAt);
 					// percorre os neuronios da camada
 					// é a primeira camada antes da saida?
 					bool antesSaida = (camadaAt == (quantidadeCamadas - 3));
@@ -356,12 +370,12 @@ class RedeNeural {
 						somaErro += erro;
 						for (int peso = 0; peso < camadas[camadaAt].neuronio[neuronioAt].quantidade; peso++) {
 							// percore os pesos de cada neuronio
-							//Δwjk = ɳ . yj . ek
-							// wjk (novo) = wjk + Δwjk
+							// Dwjk = ɳ . yj . ek
+							// wjk (novo) = wjk + Dwjk
 							double deltaPeso = 0.0f;
 							double pesoNovo = 0.0f;
 							if (peso < camadas[camadaAt].neuronio[neuronioAt].quantidade - 1) {
-								deltaPeso = taxaDeAprendizagem * erro * camadas[0].neuronio[peso].saida;	// ok
+								deltaPeso = taxaDeAprendizagem * erro * camadas[camadaAt].neuronio[neuronioAt].saida;	 // ok
 							} else {
 								deltaPeso = taxaDeAprendizagem * erro * bias;	 // ok
 							}
@@ -374,6 +388,45 @@ class RedeNeural {
 				somaErro = 0.0f;
 			}
 		}
+	}
+
+	/*
+		==========================
+		|  Cabeçalho de arquivo  |
+		==========================
+		quantidade de camadas
+		qtdEntradas
+		qtdSaidas
+		bias
+		funcao
+		backpropagationType
+		taxaDeAprendizagem
+		camadas[x].tamanho
+		camadas[x].neuronio[y].quantidade
+		camadas[x].neuronio[y].pesosEntrada[z]
+	*/
+	void gravaRNA(char *nomeArquivo) {
+		FILE *fp = fopen(nomeArquivo, "w+");
+		fprintf(fp, "RNAFile\n");
+		fprintf(fp, "%i\n", quantidadeCamadas);
+		fprintf(fp, "%i\n", qtdEntradas);
+		fprintf(fp, "%i\n", qtdSaidas);
+		fprintf(fp, "%.2f\n", bias);
+		fprintf(fp, "%i\n", funcao);
+		fprintf(fp, "%i\n", backpropagationType);
+		fprintf(fp, "%.6f\n", taxaDeAprendizagem);
+		for (int camadaAt = 0; camadaAt < quantidadeCamadas - 2; camadaAt++) {
+			fprintf(fp, "%i\n", camadas[camadaAt].tamanho);
+			for (int neuronioAt = 0; neuronioAt < camadas[camadaAt].tamanho; neuronioAt++) {
+				fprintf(fp, "%i\n", camadas[camadaAt].neuronio[neuronioAt].quantidade);
+				for (int pesos = 0; pesos < camadas[camadaAt].neuronio[neuronioAt].quantidade; pesos++) {
+					fprintf(fp, "%.10f\n", camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[pesos]);
+				}
+			}
+		}
+		fprintf(fp, "ERNAFile");
+		fflush(fp);
+		fclose(fp);
 	}
 };
 
@@ -403,13 +456,21 @@ void debugSetter(RedeNeural rn) {
 }
 
 int main() {	// essa parte é só para testar
-	int x[] = {400, 400, 0};
-	RedeNeural rect((unsigned long)(96000), x, (unsigned long)1);
+	unsigned long int x[] = {400, 400, 0};
+	unsigned long int entradas = 96000;
+	unsigned long int saidas = 1;
+	RedeNeural rect(entradas, x, saidas);
 	rect.seed = 2;
 	rect.randomCreate();
-	debugSetter(rect);
+	// debugSetter(rect);
+	printf("propagando\n");
 	rect.propagacao();
+	// rect.printRede();
+	printf("\nretropropagando\n");
 	rect.retroPorpagacao();
+	printf("salvando\n");
+	// rect.gravaRNA("arquivo.rna");
+	printf("salvo\n");
 	// rect.printRede();
 	// rect.dealloc();		problematico
 	return 0;
