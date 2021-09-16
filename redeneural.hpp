@@ -9,7 +9,6 @@
 		Paulo Ricardo Savaris dos Santos
 	data: 16/09/2021
 */
-
 unsigned long long int tamanhoVetorInt(unsigned long long int *i) {
 	unsigned long long int tamanho = 0;
 	while (i[tamanho] != 0) {
@@ -46,9 +45,9 @@ typedef struct {
 	NEURONIOS *neuronio;
 } CAMADA;
 
-double randomDouble() {	 // gera numero aleatório entre -1 e 1
+double randomDouble() {	 // gera numero aleatório entre 0 e 1
 	// pode ser 0 mas não pode ser 1
-	return (double)((rand() % 2000) - 1000) / 1000;
+	return (double)((rand() % 2000)) / 1000;
 }
 /*
 	Classe criada com a finalidade de facilitar a criação de uma rede neural fazendo todos
@@ -168,12 +167,12 @@ class RedeNeural {
 					y(n) = ------------------------
 							exp(a.net) + exp(-a.net)
 				*/
-				return ((exp(a * net) - exp(-a * net)) / (exp(a * net) + exp(-a * net)));
-				break;
-			default:
-				return net;
+				double yN = ((exp(a * net) - exp(-a * net)) / (exp(a * net) + exp(-a * net)));
+				if (yN == yN) return yN;
+				return 0.00001;
 				break;
 		}
+		return net;
 	}
 
 	double derivada(double net, double a) {
@@ -337,9 +336,6 @@ class RedeNeural {
 		}
 	}
 	void retroPorpagacao() {
-		//	-------------------------
-		//	|	Retropropagação		|
-		//	-------------------------
 		if (this->backpropagationType == 1) {
 			double somaErro = 0.0f;
 			double erroSomado = 0.0f;
@@ -360,7 +356,9 @@ class RedeNeural {
 						deltaPeso = taxaDeAprendizagem * erro * bias;	 // ok
 					}
 					pesoNovo = deltaPeso + neuroniosSaidas[neuronioA].pesosEntrada[peso];
-					neuroniosSaidas[neuronioA].pesosEntrada[peso] = pesoNovo;
+					if (pesoNovo == pesoNovo) {
+						neuroniosSaidas[neuronioA].pesosEntrada[peso] = pesoNovo;
+					}
 				}
 			}
 			erroSomado = somaErro;
@@ -395,7 +393,9 @@ class RedeNeural {
 								deltaPeso = taxaDeAprendizagem * erro * bias;	 // ok
 							}
 							pesoNovo = deltaPeso + camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[peso];
-							camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[peso] = pesoNovo;
+							if (pesoNovo == pesoNovo) {
+								camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[peso] = pesoNovo;
+							}
 						}
 					}
 				}
@@ -464,11 +464,11 @@ class RedeNeural {
 
 	void carregaRNA(char *nomeArquivo) {
 		FILE *fp = fopen(nomeArquivo, "r+");
-		this->dealloc();
 		if (fp == NULL) {
 			printf("Erro ao carregar arquivo");
 			return;
 		}
+		this->dealloc();
 		char linha[50];
 		fscanf(fp, "%50[^\n]s", linha);
 		fscanf(fp, "%*c");
@@ -499,6 +499,10 @@ class RedeNeural {
 		sscanf(linha, "%lf", &taxaDeAprendizagem);
 
 		camadas = (CAMADA *)malloc((quantidadeCamadas - 2) * sizeof(CAMADA));
+
+		valoresEntradas = (double *)malloc(qtdEntradas * sizeof(double));
+		valoresSaidas = (double *)malloc(qtdSaidas * sizeof(double));
+		saidaDesejada = (double *)malloc(qtdSaidas * sizeof(double));
 
 		for (int camadaAt = 0; camadaAt < quantidadeCamadas - 2; camadaAt++) {
 			// circula cada camada
