@@ -66,14 +66,16 @@ void assinaEntradas(RedeNeural rn, FILEDATA fd) {
 	return;
 }
 
+void calculaErros() {}
+
 int main() {
-	unsigned long int x[] = {40, 40, 0};
+	unsigned long int x[] = {10, 11, 0};
 	unsigned long int entrada = 96000;
 	unsigned long int saida = 1;
 	FILEDATA data[100];
 	char nome[50];
 	int epocaInicio = 0;
-	const int quantidadeDeEpocas = 3000;
+	const int quantidadeDeEpocas = 6000;
 	FILE* fconfig = fopen("src/config.cfg", "r");
 
 	if (fconfig != NULL) {
@@ -94,25 +96,19 @@ int main() {
 	RedeNeural rna(entrada, x, saida);
 	rna.randomCreate();
 	char arqEntrada[30];
-	sprintf(arqEntrada, "src/epocas/Epoca%04i.rna", epocaInicio - 1);
+	sprintf(arqEntrada, "src/epocas/Epoca%04i.rna", epocaInicio);
 	rna.carregaRNA(arqEntrada);
 	rna.taxaDeAprendizagem = 0.4;
 	printf("função %i\n", rna.funcao);
 
 	for (int epoca = epocaInicio; epoca < quantidadeDeEpocas; epoca++) {
-		printf("epoca: %i\n", epoca);
+		printf("epoca: %i de %i\n", epoca, quantidadeDeEpocas);
 		unsigned long int tInicio = time(NULL);
 		for (int i = 0; i < 100; i++) {
-			printf("amostra:  %i\n", i);
-			if (i % 10 == 0) {
-				char arqSaida[30];
-				printf("gravando\n");
-				sprintf(arqSaida, "src/training/loop%04i.rna", i);
-				rna.gravaRNA(arqSaida);
-			}
+			// printf("amostra:  %i\n", i);
 			assinaEntradas(rna, data[i]);
 			rna.propagacao();
-			printf("\tretropropaga a saida: %.4f de %.4f\n", rna.valoresSaidas[0], rna.saidaDesejada[0]);
+			// printf("\tretropropaga a saida: %.4f de %.4f\n", rna.valoresSaidas[0], rna.saidaDesejada[0]);
 			if (rna.valoresSaidas[0] != rna.valoresSaidas[0]) {
 				printf("!!!erro not a number!!!\n");
 				return -1;
@@ -121,7 +117,7 @@ int main() {
 		}
 		char epocaArq[30];
 		sprintf(epocaArq, "src/epocas/Epoca%04i.rna", epoca);
-		if (epoca % 5 == 0) {
+		if (epoca % 10 == 0) {
 			rna.gravaRNA(epocaArq);
 			fconfig = fopen("src/config.cfg", "w+");
 			fprintf(fconfig, "%i", epoca);

@@ -466,7 +466,7 @@ class RedeNeural {
 	void carregaRNA(char *nomeArquivo) {
 		FILE *fp = fopen(nomeArquivo, "r+");
 		if (fp == NULL) {
-			printf("Erro ao carregar arquivo");
+			printf("Erro ao carregar arquivo: %s\n", nomeArquivo);
 			return;
 		}
 		this->dealloc();
