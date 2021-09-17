@@ -1,4 +1,7 @@
 {
-  "cSpell.words": ["Dwjk", "Legnani"],
-  "C_Cpp.errorSquiggles": "Disabled"
+  "files.associations": {
+    "*.tpp": "cpp"
+  },
+  "terminal.integrated.shell.windows": "cmd.exe",
+  "cSpell.words": ["fconfig"]
 }
