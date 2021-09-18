@@ -257,7 +257,7 @@ class RedeNeural {
 			printf("%.2f ", valoresEntradas[i]);
 		}
 		printf("%.2fB\n", bias);
-		for (int camadaAtual = 0; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
+		for (int camadaAtual = quantidadeCamadas - 3; camadaAtual < quantidadeCamadas - 2; camadaAtual++) {
 			printf("C: %i T:%i\n", camadaAtual, this->tamanhoDaCamada(camadaAtual));
 			for (int neuronio = 0; neuronio < this->tamanhoDaCamada(camadaAtual); neuronio++) {
 				printf("\tN: %i Q: %i S: %.3f/P: ", neuronio, camadas[camadaAtual].neuronio[neuronio].quantidade,
@@ -436,7 +436,7 @@ class RedeNeural {
 			for (int neuronioAt = 0; neuronioAt < camadas[camadaAt].tamanho; neuronioAt++) {
 				fprintf(fp, "%i\n", camadas[camadaAt].neuronio[neuronioAt].quantidade);
 				for (int pesos = 0; pesos < camadas[camadaAt].neuronio[neuronioAt].quantidade; pesos++) {
-					fprintf(fp, "%.10f\n", camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[pesos]);
+					fprintf(fp, "%.15f\n", camadas[camadaAt].neuronio[neuronioAt].pesosEntrada[pesos]);
 				}
 			}
 		}
